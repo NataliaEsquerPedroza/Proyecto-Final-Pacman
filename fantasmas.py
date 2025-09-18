@@ -1,7 +1,7 @@
 from random import choice, random
 from freegames import vector
-from config import BASE_STEP, SMART_GHOSTS
-from logic import dist
+from constantes import BASE_STEP, SMART_GHOSTS
+from logica import dist
 
 def pick_course(point, course, pacman, aim, hybrid, valid_fn, chase_prob_val):
     """Elige dirección en intersección. Híbrido: 60% persecución, 40% emboscada."""

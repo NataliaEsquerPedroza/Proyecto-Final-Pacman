@@ -1,6 +1,6 @@
 from math import sqrt
 from freegames import floor, vector
-from config import (BASE_STEP, BASE_TICK_MS, TICK_DECREMENT, MIN_TICK_MS,
+from constantes import (BASE_STEP, BASE_TICK_MS, TICK_DECREMENT, MIN_TICK_MS,
                     PELLETS_PER_LEVEL, BASE_CHASE_PROB, CHASE_INCREMENT)
 
 def offset(point):
