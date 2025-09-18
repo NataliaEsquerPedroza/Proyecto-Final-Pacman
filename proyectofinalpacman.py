@@ -3,6 +3,7 @@
 # 2) Zonas rápidas verdes
 # 3) Dificultad progresiva (velocidad + obstáculos estratégicos por nivel)
 # 4) Pac-Man inicia en el centro del tablero (spawn seguro)
+# 5) Sin parpadeo: render por capas (laberinto/pellets/personajes)
 
 from random import choice, random
 from turtle import *
@@ -21,7 +22,7 @@ EXTRA_GHOST_EVERY = 999  # Desactiva aumento de fantasmas
 
 # Multiplicadores en zonas rápidas (enteros: 1 = normal, 2 = doble paso por tick)
 FAST_MULT_PAC = 2
-FAST_MULT_GHO = 2
+FAST_MULT_GHO = 1
 
 # Progresión (nivel = pellets_comidos // PELLETS_PER_LEVEL + 1)
 PELLETS_PER_LEVEL = 35
@@ -37,10 +38,10 @@ state = {
     'pellets_left': 0,
     'levels_applied': set(),     # para no re-aplicar obstáculos
 }
-path = Turtle(visible=False)
-writer = Turtle(visible=False)
+maze_t = Turtle(visible=False)     # paredes + suelo + zonas verdes (estático)
+pellets_t = Turtle(visible=False)  # SOLO pellets (dinámico)
+writer = Turtle(visible=False)     # HUD
 aim = vector(BASE_STEP, 0)
-pacman = PACMAN_START.copy()  # será sobrescrito en init_game() por center_spawn()
 
 # Colores para distinguir fantasmas
 GHOST_COLORS = ['red', 'pink', 'cyan', 'orange', 'purple']
@@ -53,7 +54,7 @@ tiles = [
     0,1,0,0,0,1,0,0,1,0,1,0,0,0,1,0,0,0,1,0,
     0,1,1,1,0,1,1,1,1,1,1,1,1,0,1,1,1,0,1,0,
     0,0,0,1,0,0,0,1,0,0,1,0,1,0,0,0,1,0,1,0,
-    0,1,1,1,1,1,0,1,1,0,1,1,0,1,1,1,1,1,1,0,
+    0,1,1,1,1,1,0,1,1,0,1,1,1,1,1,1,1,1,1,0,
     0,1,0,0,0,1,0,0,1,0,0,0,1,0,0,0,1,0,0,0,
     0,1,1,1,0,1,1,1,1,1,1,0,1,1,1,0,1,1,1,0,
     0,1,0,1,0,0,0,0,0,0,1,0,0,0,1,0,1,0,1,0,
@@ -61,10 +62,10 @@ tiles = [
     0,1,0,0,0,0,1,0,1,0,0,0,1,0,1,0,0,0,1,0,
     0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,
     0,1,0,0,0,1,0,0,1,0,1,0,0,0,1,0,0,0,1,0,
-    0,1,1,1,0,1,1,1,1,0,1,1,1,0,1,1,1,0,1,0,
+    0,1,1,1,0,1,1,1,1,0,1,1,1,1,1,1,1,0,1,0,
     0,0,0,1,0,0,0,1,0,0,1,0,1,0,0,0,1,0,0,0,
-    0,1,1,1,1,1,0,1,1,0,1,1,0,1,1,1,1,1,1,0,
-    0,1,0,0,0,0,0,1,0,1,0,0,0,0,0,1,0,0,1,0,
+    0,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,0,
+    0,1,0,0,0,1,0,1,0,1,0,0,0,0,0,1,0,0,1,0,
     0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -82,58 +83,47 @@ def add_fast_rect(ix, iy, w, h):
                 FAST_ZONE_IDX.add(idx)
 
 # Pintado de zonas (verde): puedes ajustar
-add_fast_rect(1, 1, 6, 1)      # barra superior izquierda
-add_fast_rect(7, 3, 6, 1)      # segmento medio
-add_fast_rect(3, 5, 10, 1)     # segmento medio bajo
-add_fast_rect(1, 11, 18, 1)    # pasillo central largo
-add_fast_rect(2, 15, 6, 1)     # barra inferior izquierda
-add_fast_rect(11, 15, 7, 1)    # barra inferior derecha
+add_fast_rect(1, 1, 6, 1)
+add_fast_rect(7, 3, 6, 1)
+add_fast_rect(3, 5, 10, 1)
+add_fast_rect(1, 11, 18, 1)
+add_fast_rect(2, 15, 6, 1)
+add_fast_rect(11, 15, 7, 1)
 
 # ----------------------------- Obstáculos por nivel -----------------------------
 LEVEL_OBSTACLES = {
-    2: [  # cuellos de botella moderados
-        8 + 9*20, 10 + 9*20,   # cerca del centro
-        12 + 7*20,             # lado derecho medio
-        3 + 13*20,             # giro en L izq-baja
-    ],
-    3: [  # un poco más exigente
-        6 + 5*20, 13 + 5*20,   # estrechar carril central alto
-        7 + 11*20, 12 + 11*20, # ventanas centrales
-        9 + 15*20,             # cuello bajo
-    ],
-    4: [  # reto alto (sigue habiendo camino)
-        4 + 3*20, 15 + 3*20,
-        5 + 9*20, 14 + 9*20,
-        8 + 11*20,
-    ],
+    2: [8 + 9*20, 10 + 9*20, 12 + 7*20, 3 + 13*20],
+    3: [6 + 5*20, 13 + 5*20, 7 + 11*20, 12 + 11*20, 9 + 15*20],
+    4: [4 + 3*20, 15 + 3*20, 5 + 9*20, 14 + 9*20, 8 + 11*20],
 }
 
 def safe_apply_wall(idx):
-    """Convierte una celda en pared cuidando pellets/contadores."""
     if 0 <= idx < len(tiles) and tiles[idx] != 0:
         if tiles[idx] == 1:
             state['pellets_left'] = max(0, state['pellets_left'] - 1)
         tiles[idx] = 0
 
 def apply_level_obstacles(lvl):
-    """Aplica obstáculos una sola vez por nivel."""
     if lvl in state['levels_applied']:
         return
     changes = LEVEL_OBSTACLES.get(lvl, [])
     for idx in changes:
         safe_apply_wall(idx)
     if changes:
-        clear()
-        world()
+        # Si cambian paredes/pellets, hay que redibujar capas estáticas
+        maze_t.clear()
+        pellets_t.clear()
+        draw_maze()
+        draw_pellets()
     state['levels_applied'].add(lvl)
 
 # ----------------------------- Utilidades -----------------------------
-def square(x, y):
-    path.up(); path.goto(x, y); path.down()
-    path.begin_fill()
+def square(t, x, y, size=20):
+    t.up(); t.goto(x, y); t.down()
+    t.begin_fill()
     for _ in range(4):
-        path.forward(20); path.left(90)
-    path.end_fill()
+        t.forward(size); t.left(90)
+    t.end_fill()
 
 def offset(point):
     x = (floor(point.x, 20) + 200) / 20
@@ -150,67 +140,59 @@ def valid(point):
     return point.x % 20 == 0 or point.y % 20 == 0
 
 def at_intersection(p): return p.x % 20 == 0 and p.y % 20 == 0
-
 def dist(a, b): return sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2)
-
-def in_fast_zone(point):
-    idx = offset(point)
-    return idx in FAST_ZONE_IDX
-
-def pellets_info():
-    return sum(1 for t in tiles if t == 1)
-
-def chase_prob():
-    return min(0.95, BASE_CHASE_PROB + (state['level'] - 1) * CHASE_INCREMENT)
-
-def current_tick_ms():
-    dec = (state['level'] - 1) * TICK_DECREMENT
-    return max(MIN_TICK_MS, BASE_TICK_MS - dec)
-
+def in_fast_zone(point): return offset(point) in FAST_ZONE_IDX
+def pellets_info(): return sum(1 for t in tiles if t == 1)
+def chase_prob(): return min(0.95, BASE_CHASE_PROB + (state['level'] - 1) * CHASE_INCREMENT)
+def current_tick_ms(): return max(MIN_TICK_MS, BASE_TICK_MS - (state['level'] - 1) * TICK_DECREMENT)
 def level_from_score():
     eaten = state['pellets_total'] - state['pellets_left']
     return max(1, 1 + eaten // PELLETS_PER_LEVEL)
 
-# --- NUEVO: spawn seguro en el centro ---
+# --- Spawn seguro en el centro ---
 def center_spawn():
-    """
-    Busca celdas válidas alrededor del centro geométrico del tablero
-    y devuelve la primera libre. Mantiene alineación a la grilla.
-    """
-    # Centro de la grilla (en pasos de 20 px): (-20, -20) y alrededores
     candidates = [
         vector(-20, -20), vector(0, -20), vector(-20, 0), vector(0, 0),
         vector(-40, -20), vector(20, -20), vector(-20, -40), vector(-20, 20),
         vector(20, 0), vector(0, 20), vector(-40, 0), vector(0, -40)
     ]
     for c in candidates:
-        if valid(c):
-            return c
-    return PACMAN_START  # fallback si el centro estuviera bloqueado
+        if valid(c): return c
+    return PACMAN_START
 
-# ----------------------------- Render del mundo -----------------------------
-def world():
+# ----------------------------- Render por capas -----------------------------
+def draw_maze():
+    """Capa estática: suelo/paredes (azul) + zonas rápidas (verde)."""
     bgcolor('black')
-    path.color('blue'); path.width(1)
+    maze_t.color('blue'); maze_t.width(1)
     for index, tile in enumerate(tiles):
         if tile > 0:
             x = (index % 20) * 20 - 200
             y = 180 - (index // 20) * 20
-            square(x, y)
-            if tile == 1:
-                path.up(); path.goto(x + 10, y + 10); path.dot(2, 'white')
+            square(maze_t, x, y)
 
     # zonas rápidas (marco verde)
     for index in FAST_ZONE_IDX:
         if tiles[index] > 0:
             x = (index % 20) * 20 - 200
             y = 180 - (index // 20) * 20
-            path.up(); path.goto(x, y); path.down()
-            path.color('green'); path.width(3)
+            maze_t.up(); maze_t.goto(x, y); maze_t.down()
+            maze_t.color('green'); maze_t.width(3)
             for _ in range(2):
-                path.forward(20); path.left(90)
-                path.forward(20); path.left(90)
-            path.width(1); path.color('blue')
+                maze_t.forward(20); maze_t.left(90)
+                maze_t.forward(20); maze_t.left(90)
+            maze_t.width(1); maze_t.color('blue')
+
+def draw_pellets():
+    """Capa dinámica: solo puntitos blancos según tiles == 1."""
+    pellets_t.clear()
+    pellets_t.up()
+    for index, tile in enumerate(tiles):
+        if tile == 1:
+            x = (index % 20) * 20 - 200
+            y = 180 - (index // 20) * 20
+            pellets_t.goto(x + 10, y + 10)
+            pellets_t.dot(2, 'white')
 
 # ----------------------------- IA de fantasmas -----------------------------
 def pick_course(point, course, hybrid=False):
@@ -226,7 +208,6 @@ def pick_course(point, course, hybrid=False):
 
     p = pacman
     if hybrid:
-        # 60% persecución directa, 40% emboscada a ~3 celdas por delante
         if random() < 0.6:
             target = p
         else:
@@ -244,7 +225,6 @@ def pick_course(point, course, hybrid=False):
     return choice(options)
 
 def build_ghosts(n):
-    # El 5° (índice 4) será híbrido si existe
     candidates = [
         vector(-180, 160), vector(-180, -160), vector(100, 160), vector(100, -160),
         vector(-20, 160), vector(140, -20), vector(-20, -20), vector(140, 160),
@@ -263,9 +243,7 @@ def build_ghosts(n):
 ghosts = build_ghosts(GHOSTS_N)
 
 # ----------------------------- Lógica de juego -----------------------------
-def try_add_ghost():
-    """Desactivado por MAX_GHOSTS=5 + EXTRA_GHOST_EVERY=999. Se deja por compatibilidad."""
-    return
+def try_add_ghost(): return  # desactivado
 
 def move_steps(entity_pos, move_vec, steps):
     for _ in range(max(1, int(steps))):
@@ -280,12 +258,13 @@ def move():
     if new_level != state['level']:
         state['level'] = new_level
 
-    # Aplicar obstáculos de ese nivel (una vez)
+    # Obstáculos por nivel (una vez)
     apply_level_obstacles(state['level'])
 
     writer.undo()
     writer.write(f"Score: {state['score']}  Lvl: {state['level']}")
 
+    # Limpiar SOLO personajes (no el laberinto ni los pellets)
     clear()
 
     # --- Pac-Man ---
@@ -293,15 +272,13 @@ def move():
     if aim.x != 0 or aim.y != 0:
         move_steps(pacman, vector(aim.x, aim.y), pac_steps)
 
-    # Comer punto
+    # Comer punto: actualizar tiles y redibujar SÓLO la capa de pellets
     index = offset(pacman)
     if tiles[index] == 1:
         tiles[index] = 2
         state['score'] += 1
         state['pellets_left'] -= 1
-        x = (index % 20) * 20 - 200
-        y = 180 - (index // 20) * 20
-        path.color('blue'); square(x, y)
+        draw_pellets()  # <- este pellet ya no se dibuja
 
     # Dibujar Pac-Man
     up(); goto(pacman.x + 10, pacman.y + 10); dot(20, 'yellow')
@@ -314,7 +291,7 @@ def move():
 
         if valid(point + course):
             if at_intersection(point):
-                is_hybrid = (gi == 4)  # 5º fantasma
+                is_hybrid = (gi == 4)
                 course_new = pick_course(point, course, hybrid=is_hybrid)
                 ghosts[gi][1] = course_new
                 move_steps(point, course_new, g_mult)
@@ -330,7 +307,6 @@ def move():
         dot(20, GHOST_COLORS[gi % len(GHOST_COLORS)])
 
     update()
-
     # Colisión
     for point, _ in ghosts:
         if abs(pacman - point) < 20:
@@ -363,7 +339,10 @@ def init_game():
     # --- colocar Pac-Man en el centro válido ---
     pacman = center_spawn()
 
-    world()
+    # Dibujar capas estáticas una vez
+    draw_maze()
+    draw_pellets()
+
     move()
     done()
 
