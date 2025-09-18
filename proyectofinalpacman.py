@@ -17,12 +17,9 @@ PACMAN_START = vector(80, -120)  # se sobrescribe con center_spawn() al iniciar
 SMART_GHOSTS = True   # IA de persecución
 BASE_CHASE_PROB = 0.75
 BASE_TICK_MS = 95     # ms entre frames (dinámico por nivel)
-MAX_GHOSTS = 5        # TOPE DURO = 5
-EXTRA_GHOST_EVERY = 999  # Desactiva aumento de fantasmas
 
 # Multiplicadores en zonas rápidas (enteros: 1 = normal, 2 = doble paso por tick)
 FAST_MULT_PAC = 2
-FAST_MULT_GHO = 1
 
 # Progresión (nivel = pellets_comidos // PELLETS_PER_LEVEL + 1)
 PELLETS_PER_LEVEL = 35
@@ -243,7 +240,6 @@ def build_ghosts(n):
 ghosts = build_ghosts(GHOSTS_N)
 
 # ----------------------------- Lógica de juego -----------------------------
-def try_add_ghost(): return  # desactivado
 
 def move_steps(entity_pos, move_vec, steps):
     for _ in range(max(1, int(steps))):
