@@ -1,6 +1,6 @@
 # Pac-Man Plus: 
 # 1) 5° fantasma con IA híbrida
-# 2) Zonas rápidas verdes y 
+# 2) Zonas rápidas verdes
 # 3) Dificultad progresiva
 
 from random import choice, random
