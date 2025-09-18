@@ -115,6 +115,29 @@ def apply_level_obstacles(lvl):
     state['levels_applied'].add(lvl)
 
 # ----------------------------- Utilidades -----------------------------
+
+# DEFINIR LA FORMA DE UN TRIANGULO PARA LOS FANTASMAS
+def draw_triangle(cx, cy, side, fill):
+    """Dibuja un triángulo equilátero centrado en (cx, cy)."""
+    h = side * sqrt(3) / 2  # altura
+    # Vértices centrados en (cx, cy)
+    top = (cx,            cy + (2*h/3))
+    left = (cx - side/2,  cy - (h/3))
+    right = (cx + side/2, cy - (h/3))
+
+    up()
+    goto(*top)
+    color(fill)
+    begin_fill()
+    down()
+    goto(*right)
+    goto(*left)
+    goto(*top)
+    end_fill()
+    up()
+
+
+# DEFINIR LOS CUADRADOS DEL TABLERO
 def square(t, x, y, size=20):
     t.up(); t.goto(x, y); t.down()
     t.begin_fill()
@@ -276,7 +299,7 @@ def move():
         state['pellets_left'] -= 1
         draw_pellets()  # <- este pellet ya no se dibuja
 
-    # Dibujar Pac-Man
+# DIBUJAMOS PACMAN COMO UN CIRCULO AMARILLO
     up(); goto(pacman.x + 10, pacman.y + 10); dot(20, 'yellow')
 
     # --- Fantasmas ---
@@ -308,8 +331,11 @@ def move():
             ghosts[gi][1] = course_new
             move_steps(point, course_new, g_mult)
 
-        up(); goto(point.x + 10, point.y + 10)
-        dot(20, GHOST_COLORS[gi % len(GHOST_COLORS)])
+# DIBUJAMOS FANTASMAS COMO TRIÁNGULOS DE COLORES
+        cx, cy = point.x + 10, point.y + 7
+        draw_triangle(cx, cy, 19, GHOST_COLORS[gi % len(GHOST_COLORS)])
+
+
 
 
     update()
