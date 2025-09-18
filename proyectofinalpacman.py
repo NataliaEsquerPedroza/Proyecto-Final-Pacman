@@ -293,7 +293,7 @@ def move():
         pac_steps = FAST_MULT_PAC if in_fast_zone(pacman) else 1
 
         # REGLA: los fantasmas NUNCA pueden ser más rápidos que el jugador
-        g_mult = min(g_mult_raw, pac_steps)
+        g_mult = min(g_mult_raw, 1)
 
         # REGLA: las zonas rápidas NO afectan a los fantasmas (no sumamos nada por zonas)
         # (Quitamos cualquier código tipo: if in_fast_zone(point): g_mult += ...)
