@@ -1,5 +1,5 @@
 from turtle import Turtle, bgcolor
-from config import GHOST_COLORS
+from constantes import GHOST_COLORS
 from math import sqrt
 
 # Capas (turtles) separadas para evitar parpadeo
