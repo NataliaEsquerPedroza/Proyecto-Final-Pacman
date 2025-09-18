@@ -284,14 +284,23 @@ def move():
     up(); goto(pacman.x + 10, pacman.y + 10); dot(20, 'yellow')
 
     # --- Fantasmas ---
+# --- Fantasmas ---
     for gi, (point, course) in enumerate(ghosts):
-        g_mult = 1 + max(0, state['level'] - 1) // 1
-        if in_fast_zone(point):
-            g_mult += (FAST_MULT_GHO - 1)
+        # Pasos “base” por nivel (dificultad). Ej.: nivel 1 -> 1 paso, nivel 2 -> 2 pasos...
+        g_mult_raw = 1 + max(0, state['level'] - 1) // 1
+
+        # Pasos actuales de Pac-Man en este tick (puede ser 1 o 2 si está en zona rápida)
+        pac_steps = FAST_MULT_PAC if in_fast_zone(pacman) else 1
+
+        # REGLA: los fantasmas NUNCA pueden ser más rápidos que el jugador
+        g_mult = min(g_mult_raw, pac_steps)
+
+        # REGLA: las zonas rápidas NO afectan a los fantasmas (no sumamos nada por zonas)
+        # (Quitamos cualquier código tipo: if in_fast_zone(point): g_mult += ...)
 
         if valid(point + course):
             if at_intersection(point):
-                is_hybrid = (gi == 4)
+                is_hybrid = (gi == 4)  # 5º fantasma
                 course_new = pick_course(point, course, hybrid=is_hybrid)
                 ghosts[gi][1] = course_new
                 move_steps(point, course_new, g_mult)
@@ -305,6 +314,7 @@ def move():
 
         up(); goto(point.x + 10, point.y + 10)
         dot(20, GHOST_COLORS[gi % len(GHOST_COLORS)])
+
 
     update()
     # Colisión
