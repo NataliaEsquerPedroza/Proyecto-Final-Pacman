@@ -2,6 +2,7 @@
 # 1) 5° fantasma con IA híbrida
 # 2) Zonas rápidas verdes
 # 3) Dificultad progresiva (velocidad + obstáculos estratégicos por nivel)
+# 4) Pac-Man inicia en el centro del tablero (spawn seguro)
 
 from random import choice, random
 from turtle import *
@@ -11,7 +12,7 @@ from math import sqrt
 # ----------------------------- Parámetros editables -----------------------------
 GHOSTS_N = 5          # Número fijo de fantasmas (incluye al híbrido)
 BASE_STEP = 5         # Paso base (múltiplo de 5 para alinear a grilla)
-PACMAN_START = vector(80, -120)
+PACMAN_START = vector(80, -120)  # se sobrescribe con center_spawn() al iniciar
 SMART_GHOSTS = True   # IA de persecución
 BASE_CHASE_PROB = 0.75
 BASE_TICK_MS = 95     # ms entre frames (dinámico por nivel)
@@ -39,7 +40,7 @@ state = {
 path = Turtle(visible=False)
 writer = Turtle(visible=False)
 aim = vector(BASE_STEP, 0)
-pacman = PACMAN_START.copy()
+pacman = PACMAN_START.copy()  # será sobrescrito en init_game() por center_spawn()
 
 # Colores para distinguir fantasmas
 GHOST_COLORS = ['red', 'pink', 'cyan', 'orange', 'purple']
@@ -89,10 +90,8 @@ add_fast_rect(2, 15, 6, 1)     # barra inferior izquierda
 add_fast_rect(11, 15, 7, 1)    # barra inferior derecha
 
 # ----------------------------- Obstáculos por nivel -----------------------------
-# Listas de índices (tiles) que se convertirán en paredes (0) cuando se alcance el nivel.
-# Seleccionados para estrechar pasillos sin bloquear rutas principales.
 LEVEL_OBSTACLES = {
-    2: [  # unos cuantos cuellos de botella
+    2: [  # cuellos de botella moderados
         8 + 9*20, 10 + 9*20,   # cerca del centro
         12 + 7*20,             # lado derecho medio
         3 + 13*20,             # giro en L izq-baja
@@ -124,7 +123,6 @@ def apply_level_obstacles(lvl):
     for idx in changes:
         safe_apply_wall(idx)
     if changes:
-        # Redibuja mundo para reflejar paredes nuevas
         clear()
         world()
     state['levels_applied'].add(lvl)
@@ -172,6 +170,23 @@ def current_tick_ms():
 def level_from_score():
     eaten = state['pellets_total'] - state['pellets_left']
     return max(1, 1 + eaten // PELLETS_PER_LEVEL)
+
+# --- NUEVO: spawn seguro en el centro ---
+def center_spawn():
+    """
+    Busca celdas válidas alrededor del centro geométrico del tablero
+    y devuelve la primera libre. Mantiene alineación a la grilla.
+    """
+    # Centro de la grilla (en pasos de 20 px): (-20, -20) y alrededores
+    candidates = [
+        vector(-20, -20), vector(0, -20), vector(-20, 0), vector(0, 0),
+        vector(-40, -20), vector(20, -20), vector(-20, -40), vector(-20, 20),
+        vector(20, 0), vector(0, 20), vector(-40, 0), vector(0, -40)
+    ]
+    for c in candidates:
+        if valid(c):
+            return c
+    return PACMAN_START  # fallback si el centro estuviera bloqueado
 
 # ----------------------------- Render del mundo -----------------------------
 def world():
@@ -331,6 +346,7 @@ def change(x, y):
 
 # ----------------------------- Setup -----------------------------
 def init_game():
+    global pacman
     state['pellets_total'] = pellets_info()
     state['pellets_left'] = state['pellets_total']
 
@@ -343,6 +359,10 @@ def init_game():
     onkey(lambda: change(-BASE_STEP, 0), 'Left')
     onkey(lambda: change(0, BASE_STEP), 'Up')
     onkey(lambda: change(0, -BASE_STEP), 'Down')
+
+    # --- colocar Pac-Man en el centro válido ---
+    pacman = center_spawn()
+
     world()
     move()
     done()
