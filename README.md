@@ -7,7 +7,7 @@ Incluye **5º fantasma con IA híbrida**, **zonas rápidas** (verdes) solo para 
 
 ---
 
-## 🎮 Características
+## Características
 
 - **5º fantasma (IA híbrida):** alterna entre persecución directa (~60%) y emboscada (apunta ~3 celdas por delante de la dirección de Pac-Man) ~40%.
 - **Zonas rápidas (verdes):** al pisarlas, **solo Pac-Man** duplica su paso en ese tick; los fantasmas no se aceleran.
@@ -16,7 +16,7 @@ Incluye **5º fantasma con IA híbrida**, **zonas rápidas** (verdes) solo para 
 
 ---
 
-## 🧱 Estructura del repositorio
+## Estructura del repositorio
 
 ```
 .
@@ -26,8 +26,7 @@ Incluye **5º fantasma con IA híbrida**, **zonas rápidas** (verdes) solo para 
 └─ README.md              # Este archivo
 ```
 
-> Dentro de `CodigoFinal/` ejecuta el **script principal** (por ejemplo `main.py` o el archivo que contenga `init_game()`). Actualiza aquí el nombre exacto si tu equipo ya lo definió.
-
+> Dentro de `CodigoFinal/` ejecuta `main.py`
 ---
 
 ## 🔧 Requisitos
@@ -55,7 +54,7 @@ source .venv/bin/activate
 
 ---
 
-## ▶️ Ejecución
+## Ejecución
 
 1. Entra a la carpeta del código final:
 
@@ -67,12 +66,11 @@ cd CodigoFinal
 
 ```bash
 python main.py
-# o: python PacmanPlus.py
 ```
 
 ---
 
-## 🎯 Controles
+## Controles
 
 - **Flechas** del teclado: mover a Pac-Man (↑ ↓ ← →).
 
@@ -94,7 +92,7 @@ python main.py
 
 ---
 
-## 🧠 Resumen técnico
+## Resumen técnico
 
 - **Grilla 20×20 (`tiles`)**: `0` = pared, `1` = pellet, `2` = vacío.  
 - **Zonas rápidas (`FAST_ZONE_IDX`)**: celdas transitables con borde verde; afectan **solo a Pac-Man**.  
@@ -104,78 +102,3 @@ python main.py
 - **Render**: `draw_maze()` (una vez), `draw_pellets()` (al comer), y turtle principal para Pac-Man/fantasmas cada frame.
 
 ---
-
-## 🧹 Estilo de código (PEP 8)
-
-Recomendado:
-
-- **Black** (formato) y **Ruff** (lint).
-- Docstrings estilo **Google**.
-
-Ejemplo de configuración sugerida (añade a `pyproject.toml`):
-
-```toml
-[tool.black]
-line-length = 88
-
-[tool.ruff]
-line-length = 88
-select = ["E", "F", "I", "N", "D"]
-ignore = ["E203","W503"]
-```
-
-*(Opcional)* Hooks locales:
-
-```bash
-pip install black ruff pre-commit
-pre-commit install
-pre-commit run -a
-```
-
----
-
-## 📝 Convenciones de commits
-
-Usen **Conventional Commits** (en español).  
-Ejemplos:
-
-```
-feat(ghost-ai): agrega 5º fantasma híbrido
-fix(colisiones): evita falsa colisión en esquinas
-docs(readme): instrucciones de ejecución y calidad
-```
-
-*(Opcional)* Plantilla de commit (`.gitmessage.txt`) y guía en `docs/` si deciden incorporarlas.
-
----
-
-## 🧾 Evidencia de commits por integrante
-
-Si necesitan generar logs individuales:
-
-1. Crear `scripts/export-commit-logs.sh` con un script que liste commits por autor (nombre/correo).
-2. Ejecutarlo para generar `evidence/logs/commits_<autor>.md`.
-3. Subir la carpeta `evidence/` al repo como evidencia.
-
----
-
-## 🌐 GitHub Pages (opcional)
-
-1. Crear `docs/index.md` con la documentación del proyecto.  
-2. En **Settings → Pages**: *Deploy from a branch*, **Branch**: `main`, **Folder**: `/docs`.
-
----
-
-## 🗺️ Roadmap (ideas)
-
-- Sprites “fantasma” con faldón ondulado (turtle con paths).  
-- Fruta bonus y “power pellets”.  
-- Sonidos (`winsound` o `pygame`).  
-- Niveles extra cargados desde archivo de mapa.
-
----
-
-## 📄 Licencia
-
-Este proyecto puede publicarse bajo **MIT** (o la que defina el equipo).  
-Añadir un archivo `LICENSE` si el curso lo solicita.
