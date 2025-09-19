@@ -30,7 +30,7 @@ Render sin parpadeos (capas separadas), sprites simples (Pac-Man circular y fant
 - **Zonas rápidas (verdes)**: *solo* Pac-Man duplica su paso al pisarlas.
 - **Dificultad progresiva**: el juego reduce el tiempo por *tick* y aplica obstáculos (paredes estratégicas) por nivel.
 - **Render por capas**: laberinto, pellets y actores se dibujan en *turtles* distintas para evitar parpadeo.
-- **Código modular**: separado en `config`, `board`, `logic`, `ghosts`, `draw` y `main`.
+- **Código modular**: separado en `constantes`, `tablero`, `logica`, `fantasmas`, `graficar` y `main`.
 
 ---
 
