@@ -3,6 +3,17 @@
 Versión modernizada del clásico **Pac-Man** en Python.  
 Incluye **5º fantasma con IA híbrida**, **zonas rápidas** (verdes) solo para Pac-Man, **dificultad progresiva** y **render sin parpadeo** por capas.
 
+---
+
+## Integrantes del equipo
+- **Eduardo Quintanilla** – A01723083  
+- **Carlos Andrés Calvo Guillén** – A01174783  
+- **Ángel Fernando López Tovar** – A00844906  
+- **Natalia Esquer Pedroza** – A01742031  
+
+---
+
+
 > Estructura actual del repo: `CodigoFinal/`, `CodigoContinuoDraft/`, `__pycache__/`, `README.md`.
 
 ---
